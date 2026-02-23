@@ -29,7 +29,7 @@ Install the required dependencies from the provided requirement files:
 ```
 pip install -r requirements_app.txt
 ```
-##### For Telegram Bot (includes gallery-dl)
+##### For Telegram Bot (includes yt-dlp, pytubefix, gallery-dl)
 ```
 pip install -r requirements_bot.txt
 ```
