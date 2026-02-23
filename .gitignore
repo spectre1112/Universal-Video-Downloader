@@ -1,0 +1,19 @@
+# PyInstaller & Build
+build/
+dist/
+*.spec
+
+# Python internals
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local Downloads & Temp
+downloads/
+v_temp_*
+a_temp_*
+
+# OS & Binaries
+Thumbs.db
+desktop.ini
+ffmpeg.exe

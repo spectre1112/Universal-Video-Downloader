@@ -1,0 +1,4 @@
+aiogram
+pytubefix
+yt-dlp
+gallery-dl

@@ -1,0 +1,8 @@
+PySide6
+yt-dlp
+pytubefix
+keyboard
+pyperclip
+pyautogui
+pywin32
+curl_cffi
