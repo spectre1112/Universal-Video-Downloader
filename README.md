@@ -35,7 +35,7 @@ pip install -r requirements_bot.txt
 ```
 ### 2. FFmpeg Setup
 FFmpeg is essential for stream merging.
-* **Direct Download:** https://www.gyan.dev/ffmpeg/builds/ffmpeg-git-full.7z
+* **Direct Download:** https://www.ffmpeg.org/download.html#build-windows
 * **Repository:** ```git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg```
 * **Note:** Place `ffmpeg.exe` in the project root or add its `bin` folder to your System PATH.
 
