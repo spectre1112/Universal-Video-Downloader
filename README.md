@@ -34,7 +34,7 @@ pip install -r requirements_bot.txt
 ```
 ### 2. FFmpeg Setup
 FFmpeg is required to merge audio and video into one stream.
-* **Direct Download:** https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-7.1.1-essentials_build.zip
+* **Direct Download:** https://github.com/GyanD/codexffmpeg/releases/
 * **Repository:** ```git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg```
 * **Note:** Place `ffmpeg.exe` in the project root or add its `bin` folder to your System PATH.
 
