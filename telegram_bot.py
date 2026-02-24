@@ -15,25 +15,20 @@ from pytubefix import YouTube
 from pytubefix import request as pytubefix_request
 import yt_dlp
 
-# --- Configuration ---
-# Use environment variables or a .env file for security
 API_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 FFMPEG_PATH = 'ffmpeg' 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DOWNLOAD_DIR = os.path.join(BASE_DIR, 'downloads')
-# Relative path to gallery-dl within venv
 GALLERY_DL_PATH = os.path.join(BASE_DIR, 'venv', 'bin', 'gallery-dl')
-TG_LIMIT_MB = 2000  # 2 GB Telegram limit
+TG_LIMIT_MB = 2000
 
 pytubefix_request.default_range_size = 10485760 
 
-# Local API Server setup
 local_server = TelegramAPIServer.from_base("http://localhost:8081")
 session = AiohttpSession(api=local_server)
 bot = Bot(token=API_TOKEN, session=session)
 dp = Dispatcher()
 
-# --- Utilities ---
 def format_size(bytes):
     if bytes is None or bytes == 0: return "0MB"
     return f"{bytes / 1024 / 1024:.1f}MB"
@@ -50,20 +45,17 @@ def get_status_text(pct, downloaded=None, total=None):
 def is_url(text):
     return re.match(r'^https?://', text) is not None
 
-# --- TikTok Album Downloader ---
 async def download_photo_album(message, url, status_msg):
     task_id = f"photo_{int(time.time())}"
     task_dir = os.path.join(DOWNLOAD_DIR, task_id)
     os.makedirs(task_dir, exist_ok=True)
 
     try:
-        # Launch gallery-dl
         cmd = [GALLERY_DL_PATH, "--directory", task_dir, "--no-mtime", url]
         process = await asyncio.create_subprocess_exec(
             *cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
 
-        # Progress simulation based on stdout
         count = 0
         while not process.stdout.at_eof():
             line = await process.stdout.readline()
@@ -78,7 +70,6 @@ async def download_photo_album(message, url, status_msg):
         media_photos = []
         audio_file = None
 
-        # Collect files recursively
         for root, dirs, files in os.walk(task_dir):
             for f in sorted(files):
                 path = os.path.join(root, f)
@@ -88,10 +79,8 @@ async def download_photo_album(message, url, status_msg):
                     audio_file = path
 
         if media_photos:
-            # Send photos in groups of 10
             for i in range(0, len(media_photos), 10):
                 await bot.send_media_group(message.chat.id, media=media_photos[i:i+10])
-            # Send associated audio
             if audio_file:
                 await bot.send_audio(message.chat.id, audio=FSInputFile(audio_file))
             await status_msg.delete()
@@ -103,7 +92,6 @@ async def download_photo_album(message, url, status_msg):
     finally:
         shutil.rmtree(task_dir, ignore_errors=True)
 
-# --- YouTube Downloader ---
 async def download_yt_video(url, res, status_msg, title):
     loop = asyncio.get_running_loop()
     last_edit_time = 0
@@ -126,7 +114,6 @@ async def download_yt_video(url, res, status_msg, title):
     v_stream = yt.streams.filter(res=res).first()
     a_stream = yt.streams.get_audio_only()
 
-    # Size validation
     total_size = v_stream.filesize + (a_stream.filesize if a_stream else 0)
     if total_size / 1024 / 1024 > TG_LIMIT_MB:
         await status_msg.edit_text(f"⚠️ File is too large ({format_size(total_size)}). Limit: 2GB.")
@@ -145,7 +132,6 @@ async def download_yt_video(url, res, status_msg, title):
     if os.path.exists(a_path): os.remove(a_path)
     return final_path
 
-# --- Generic Video Downloader (TikTok/Insta/etc) ---
 async def download_generic(message, url, status_msg):
     loop = asyncio.get_running_loop()
     last_edit_time = 0
@@ -188,7 +174,6 @@ async def download_generic(message, url, status_msg):
         try: await status_msg.delete()
         except: pass
 
-# --- Handlers ---
 @dp.message(Command("start"))
 async def start(message: types.Message):
     await message.answer("Hello! Send me a link from YouTube, TikTok, or Instagram.")
@@ -198,20 +183,17 @@ async def handle_link(message: types.Message):
     url = message.text
     if not is_url(url): return
 
-    # TikTok Photo Album interception
     if "tiktok.com" in url and "/photo/" in url:
         status = await message.answer(get_status_text(0))
         await download_photo_album(message, url, status)
         return
 
-    # YouTube processing
     if "youtube.com" in url or "youtu.be" in url:
         status_msg = await message.answer("⏳ Analyzing...")
         try:
             yt = YouTube(url)
             a_stream = yt.streams.get_audio_only()
             builder = InlineKeyboardBuilder()
-            # Supporting 4K and 2K
             for res in ['2160p', '1440p', '1080p', '720p', '480p', '360p']:
                 s = yt.streams.filter(res=res).first()
                 if s:
@@ -244,11 +226,11 @@ async def callback_dl_yt(callback: types.CallbackQuery):
         except: pass
 
 async def main():
-    # Clean downloads directory on startup
     if os.path.exists(DOWNLOAD_DIR):
         shutil.rmtree(DOWNLOAD_DIR)
     os.makedirs(DOWNLOAD_DIR, exist_ok=True)
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
+
     asyncio.run(main())
