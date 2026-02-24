@@ -4,19 +4,18 @@
 ![Platform](https://img.shields.io/badge/platform-windows%20%7C%20telegram-lightgrey.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-A powerful Python media downloading suite. This project features a Windows-optimized Desktop GUI and a Telegram Bot designed for high-capacity usage via Local Telegram API.
+A powerful media downloader package written in Python. This project includes a Windows-optimized graphical user interface and a Telegram bot designed to handle large amounts of data via the local Telegram API.
 
 ## 📦 Components
 
 ### 💻 Desktop GUI (desktop_downloader.py)
-A dedicated Windows application for high-quality background processing.
-* **Quality:** Supports resolutions up to 2160p (4K) at 60FPS.
-* **Workflow:** Uses a `Ctrl+Shift+S` global hook for instant clipboard processing and automated downloads.
-* **System Integration:** Runs in the system tray with background execution capabilities via Win32 API.
+A dedicated Windows application that provides high-quality background data processing.
+* **Quality:** Supports resolution up to 2160p (4K) at 60 fps.
+* **Workflow:** Use the global hook `Ctrl+Shift+S` to copy a link from the active browser page
+* **System Integration:** Supports hiding in the system tray
 
 ### 🤖 Telegram Bot (telegram_bot.py)
-A backend bot optimized for the Local Telegram API Server.
-* **TikTok Integration:** Features automated photo album scraping.
+A backend bot built for the local Telegram API server.
 * **YouTube Support:** Includes interactive resolution selection for end-users.
 * **Extended Limits:** Supports file uploads up to 2GB (requires Local API).
 
@@ -34,8 +33,8 @@ pip install -r requirements_app.txt
 pip install -r requirements_bot.txt
 ```
 ### 2. FFmpeg Setup
-FFmpeg is essential for stream merging.
-* **Direct Download:** https://www.ffmpeg.org/download.html#build-windows
+FFmpeg is required to merge audio and video into one stream.
+* **Direct Download:** https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-7.1.1-essentials_build.zip
 * **Repository:** ```git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg```
 * **Note:** Place `ffmpeg.exe` in the project root or add its `bin` folder to your System PATH.
 
@@ -51,5 +50,5 @@ python -m PyInstaller --onefile --windowed --icon=icon.ico --add-data "ffmpeg.ex
 * **FFmpeg:** Essential for stream merging.
 * **yt-dlp:** Primary engine for video extraction.
 * **pytubefix:** Secondary engine for YouTube processing.
-* **gallery-dl:** Required for TikTok photo album processing on the bot side.
+* **gallery-dl:** Required for TikTok photos processing on the bot side.
 * **Local API:** The bot requires a local server instance to bypass the standard 50MB upload limit.
