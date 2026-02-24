@@ -34,7 +34,7 @@ try:
 except OSError:
     _try_bring_to_front()
 try:
-    myappid = 'video.downloader.pro.v4.2' 
+    myappid = 'video.downloader.pro.v1.0.0' 
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 except Exception:
     pass
@@ -197,7 +197,7 @@ class NativeVideoDownloader(QMainWindow):
         self.title_bar.setFixedHeight(35)
         t_lay = QHBoxLayout(self.title_bar)
         t_lay.setContentsMargins(15, 0, 0, 0)
-        lbl = QLabel("Universal Downloader Pro v4.2")
+        lbl = QLabel("Universal Downloader Pro v1.0.0")
         lbl.setStyleSheet("color: #757575; font-size: 10px; font-weight: 800; border: none;")
         self.btn_close = QPushButton("✕")
         self.btn_close.setFixedSize(45, 35)
@@ -386,3 +386,4 @@ if __name__ == "__main__":
     window.show()
 
     sys.exit(app.exec())
+
