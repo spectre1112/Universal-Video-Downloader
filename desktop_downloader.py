@@ -33,10 +33,7 @@ try:
     _lock_socket.bind(("127.0.0.1", 47892))
 except OSError:
     _try_bring_to_front()
-
-# --- System Settings and Optimization ---
 try:
-    # Set AppID for proper Taskbar icon rendering
     myappid = 'video.downloader.pro.v4.2' 
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 except Exception:
@@ -45,7 +42,6 @@ except Exception:
 pytubefix_request.default_range_size = 4194304 
 
 def resource_path(relative_path):
-    """Find resources (icons, ffmpeg) when compiled into .exe"""
     try:
         base_path = sys._MEIPASS
     except Exception:
@@ -53,7 +49,6 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 def open_or_activate_explorer(target_path):
-    """Activates existing Explorer window or opens a new one"""
     target_path = os.path.normpath(target_path)
     is_file = os.path.isfile(target_path)
     folder_path = os.path.dirname(target_path) if is_file else target_path
@@ -62,8 +57,7 @@ def open_or_activate_explorer(target_path):
         import win32com.client
         import win32gui
         import win32con
-
-        # Check for already open explorer windows
+      
         shell = win32com.client.Dispatch("Shell.Application")
         for window in shell.Windows():
             if window.FullName and "explorer.exe" in window.FullName.lower():
@@ -88,8 +82,6 @@ def open_or_activate_explorer(target_path):
     else:
         subprocess.Popen(f'explorer "{folder_path}"')
 
-# --- Background Worker Logic ---
-
 class DownloaderWorker(threading.Thread):
     def __init__(self, url, type_idx, quality_idx, callback_status, callback_progress, callback_finish):
         super().__init__()
@@ -102,13 +94,11 @@ class DownloaderWorker(threading.Thread):
         self.downloads_dir = os.path.join(os.path.expanduser('~'), 'Downloads')
 
     def progress_callback(self, stream, chunk, bytes_remaining):
-        """YouTube progress calculation"""
         total_size = stream.filesize
         percent = int(((total_size - bytes_remaining) / total_size) * 100)
         self.callback_progress.emit(percent)
 
     def progress_hook_ytdlp(self, d):
-        """Generic progress calculation (yt-dlp)"""
         if d['status'] == 'downloading':
             total = d.get('total_bytes') or d.get('total_bytes_estimate', 0)
             if total > 0:
@@ -116,7 +106,6 @@ class DownloaderWorker(threading.Thread):
                 self.callback_progress.emit(percent)
 
     def run(self):
-        """Main thread loop"""
         try:
             low_url = self.url.lower()
             if 'youtube.com' in low_url or 'youtu.be' in low_url:
@@ -131,25 +120,24 @@ class DownloaderWorker(threading.Thread):
             self.callback_finish.emit()
 
     def download_youtube(self):
-        """YouTube specific logic (MP3/Video selection)"""
         self.callback_status.emit("⚡ ANALYZING LINK...", "#60cdff")
         yt = YouTube(self.url, on_progress_callback=self.progress_callback)
         
         res_list = ["2160p", "1080p", "720p"]
         target_res = res_list[self.quality_idx]
 
-        if self.type_idx == 1: # Audio Only
+        if self.type_idx == 1:
             stream = yt.streams.get_audio_only()
             out_file = stream.download(output_path=self.downloads_dir)
             base, _ = os.path.splitext(out_file)
             final_path = base + ".mp3"
             subprocess.run([resource_path("ffmpeg.exe"), "-y", "-i", out_file, final_path], creationflags=0x08000000)
             if os.path.exists(out_file): os.remove(out_file)
-        elif self.type_idx == 2: # Video without Audio
+        elif self.type_idx == 2:
             v_stream = yt.streams.filter(res=target_res).first() or yt.streams.get_highest_resolution()
             self.callback_status.emit(f"🎬 DOWNLOADING {v_stream.resolution}...", "#60cdff")
             final_path = v_stream.download(output_path=self.downloads_dir)
-        else: # Full Video with Audio
+        else:
             v_stream = yt.streams.filter(res=target_res).first() or yt.streams.get_highest_resolution()
             a_stream = yt.streams.get_audio_only()
             self.callback_status.emit(f"🎬 DOWNLOADING {v_stream.resolution}...", "#60cdff")
@@ -184,8 +172,6 @@ class DownloaderWorker(threading.Thread):
             open_or_activate_explorer(path)
         self.callback_status.emit("✅ COMPLETED", "#60cdff")
 
-# --- Main Application Window ---
-
 class NativeVideoDownloader(QMainWindow):
     status_signal = Signal(str, str)
     show_signal = Signal()
@@ -194,7 +180,6 @@ class NativeVideoDownloader(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        # Custom window setup (frameless, translucent)
         self.setWindowIcon(QIcon(resource_path("icon.png")))
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
@@ -208,7 +193,6 @@ class NativeVideoDownloader(QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        # Custom Title Bar
         self.title_bar = QWidget()
         self.title_bar.setFixedHeight(35)
         t_lay = QHBoxLayout(self.title_bar)
@@ -223,7 +207,6 @@ class NativeVideoDownloader(QMainWindow):
         t_lay.addStretch()
         t_lay.addWidget(self.btn_close)
 
-        # Main Content
         self.container = QWidget()
         c_lay = QVBoxLayout(self.container)
         c_lay.setContentsMargins(40, 15, 40, 35)
@@ -273,7 +256,6 @@ class NativeVideoDownloader(QMainWindow):
 
         self.apply_styles()
         
-        # Connect signals
         self.status_signal.connect(self.update_status)
         self.progress_signal.connect(self.update_progress)
         self.finish_signal.connect(self.on_dl_finish)
@@ -343,7 +325,6 @@ class NativeVideoDownloader(QMainWindow):
         self.progress.show()
         self.progress.setValue(val)
 
-    # Window drag logic
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton: self.old_pos = event.globalPosition().toPoint()
     def mouseMoveEvent(self, event):
@@ -399,9 +380,9 @@ class NativeVideoDownloader(QMainWindow):
         self.hide()
         self.tray.showMessage("Universal Downloader", "App minimized to tray", QSystemTrayIcon.MessageIcon.Information, 2000)
 
-# --- Entry Point ---
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = NativeVideoDownloader()
     window.show()
+
     sys.exit(app.exec())
