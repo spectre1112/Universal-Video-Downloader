@@ -153,7 +153,6 @@ class DownloaderWorker(threading.Thread):
         open_or_activate_explorer(final_path)
 
     def download_generic(self):
-        """Generic downloader for TikTok, Instagram, etc."""
         self.callback_status.emit("🌍 ANALYZING...", "#60cdff")
         res = [2160, 1080, 720][self.quality_idx]
         ydl_opts = {
@@ -272,7 +271,6 @@ class NativeVideoDownloader(QMainWindow):
         keyboard.add_hotkey('ctrl+shift+s', self.hotkey_download)
 
     def _start_ipc_listener(self):
-        """Listen for single instance show command"""
         def listen():
             _lock_socket.settimeout(1.0)
             while True:
@@ -292,7 +290,6 @@ class NativeVideoDownloader(QMainWindow):
         self.activateWindow()
 
     def apply_styles(self):
-        """Interface styling via QSS"""
         self.setStyleSheet("""
             #MainFrame { background-color: #1c1c1c; border: 1px solid #333333; border-radius: 12px; }
             #CloseBtn { background: transparent; color: #888; border: none; font-size: 12px; }
@@ -334,7 +331,6 @@ class NativeVideoDownloader(QMainWindow):
             self.old_pos = event.globalPosition().toPoint()
 
     def start_download(self):
-        """Collect UI data and start background thread"""
         url = self.url_input.text().strip()
         if not url: return
         self.dl_btn.setEnabled(False)
@@ -343,7 +339,6 @@ class NativeVideoDownloader(QMainWindow):
                          self.status_signal, self.progress_signal, self.finish_signal).start()
     
     def hotkey_download(self):
-        """Automated hotkey logic for copying URL and starting download"""
         def _do():
             time.sleep(0.5)
             win32api.keybd_event(0x11, 0, 0, 0)
@@ -369,13 +364,11 @@ class NativeVideoDownloader(QMainWindow):
 
     @Slot()
     def on_dl_finish(self):
-        """Unlock button and reset status after completion"""
         self.dl_btn.setEnabled(True)
         self.progress.hide()
         QTimer.singleShot(2000, lambda: self.update_status("Ready to work", "#606060"))
 
     def closeEvent(self, event):
-        """Minimize to tray instead of closing"""
         event.ignore()
         self.hide()
         self.tray.showMessage("Universal Downloader", "App minimized to tray", QSystemTrayIcon.MessageIcon.Information, 2000)
@@ -386,5 +379,6 @@ if __name__ == "__main__":
     window.show()
 
     sys.exit(app.exec())
+
 
 
