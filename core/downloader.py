@@ -24,7 +24,6 @@ try:
 except Exception:
     _PYTUBEFIX_AVAILABLE = False
 
-# Try to import gallery-dl for TikTok photo albums
 try:
     import gallery_dl
     _GALLERY_DL_AVAILABLE = True
