@@ -17,7 +17,6 @@ _WINDOWS_FORBIDDEN_CHARS = r'\/:*?"<>|'
 _YOUTUBE_HOSTS = {"youtube.com", "www.youtube.com", "youtu.be", "m.youtube.com"}
 _TIKTOK_HOSTS  = {"tiktok.com", "www.tiktok.com", "vm.tiktok.com", "m.tiktok.com"}
 
-# Try to import pytubefix; used only as an optional fallback for info fetching
 try:
     from pytubefix import YouTube
     from pytubefix import request as pytubefix_request
@@ -26,7 +25,6 @@ try:
 except Exception:
     _PYTUBEFIX_AVAILABLE = False
 
-# Try to import gallery-dl for TikTok photo albums
 try:
     import gallery_dl
     _GALLERY_DL_AVAILABLE = True
@@ -43,7 +41,6 @@ def _is_youtube(url: str) -> bool:
 
 
 def _is_tiktok_photo(url: str) -> bool:
-    """TikTok photo-album URLs contain /photo/ in the path."""
     try:
         parsed = urlparse(url)
         return "tiktok.com" in (parsed.hostname or "") and "/photo/" in parsed.path
@@ -60,7 +57,6 @@ def _is_tiktok(url: str) -> bool:
 
 
 def _find_node_path() -> Optional[str]:
-    """Find the Node.js binary. Prefers bundled portable node, falls back to system PATH."""
     bundled = resource_path(os.path.join("node", "node.exe"))
     if os.path.isfile(bundled):
         return bundled
@@ -72,7 +68,6 @@ def _find_node_path() -> Optional[str]:
 
 
 def _build_ydl_base_opts() -> dict:
-    """yt-dlp options for YouTube (no impersonate — causes curl 35 on YT)."""
     opts: dict = {
         "quiet": True,
         "noplaylist": True,
@@ -87,12 +82,6 @@ def _build_ydl_base_opts() -> dict:
 
 
 def _build_ydl_generic_opts() -> dict:
-    """yt-dlp options for TikTok / Instagram / other (uses Chrome impersonation).
-
-    Impersonate is required for TikTok — without it yt-dlp gets blocked and
-    cannot fetch metadata or video streams.  It must NOT be used for YouTube
-    because curl_cffi causes ConnectionResetError (10054) there.
-    """
     try:
         from yt_dlp.networking.impersonate import ImpersonateTarget
         impersonate = ImpersonateTarget(client="chrome")
@@ -112,7 +101,6 @@ def _safe_title(title: str) -> str:
     return "".join(c for c in title if c not in _WINDOWS_FORBIDDEN_CHARS).strip() or "video"
 
 
-# yt-dlp output template — uses %(field)s Python-style formatting
 _OUTTMPL = "%(title)s.%(ext)s"
 
 
@@ -132,7 +120,7 @@ class Downloader:
                 "thumbnail": "",
                 "duration": "",
                 "platform": "tiktok",
-                "qualities": None,  # None = hide quality selector
+                "qualities": None,
             }
         try:
             return self._info_ytdlp(url)
@@ -149,7 +137,6 @@ class Downloader:
         on_status: Callable[[str], None],
         on_finish: Callable[[Optional[str]], None],
     ) -> threading.Thread:
-        """Start download in a background thread, return the thread."""
         t = threading.Thread(
             target=self._run,
             args=(url, type_idx, quality, on_progress, on_status, on_finish),
@@ -163,7 +150,6 @@ class Downloader:
     # ------------------------------------------------------------------
 
     def _info_ytdlp(self, url: str) -> dict:
-        """Fetch metadata via yt-dlp."""
         is_yt = _is_youtube(url)
         ydl_opts = {
             **(  _build_ydl_base_opts() if is_yt else _build_ydl_generic_opts()),
@@ -188,8 +174,6 @@ class Downloader:
             if best:
                 thumbnail = best.get("url", thumbnail)
 
-        # YouTube: expose available resolutions from actual formats
-        # TikTok / Instagram / other: qualities=None → hide selector, always use best
         if is_yt:
             found = []
             for fmt in info.get("formats", []):
@@ -197,12 +181,11 @@ class Downloader:
                 for res, label in [(2160, "2160p"), (1440, "1440p"), (1080, "1080p"), (720, "720p"), (360, "360p")]:
                     if h_px >= res and label not in found:
                         found.append(label)
-            # Sort highest first
             order = ["2160p", "1440p", "1080p", "720p", "360p"]
             qualities = [q for q in order if q in found] or ["1080p"]
             platform = "youtube"
         else:
-            qualities = None  # hide quality selector
+            qualities = None
             platform = "tiktok" if _is_tiktok(url) else "generic"
 
         return {
@@ -237,15 +220,7 @@ class Downloader:
 
     @staticmethod
     def _make_progress_hook(final_path_holder, on_progress):
-        """Return a yt-dlp progress hook closure.
-
-        yt-dlp fires ``finished`` once per stream when downloading separate
-        audio/video tracks, then merges them into a single .mp4.  We must
-        NOT store the intermediate filenames (e.g. .m4a, .webm) because they
-        are deleted after the merge.  Instead we leave final_path_holder[0]
-        as None and resolve the real path after extract_info() returns.
-        """
-
+        
         def _hook(d):
             if d["status"] == "downloading":
                 total = d.get("total_bytes") or d.get("total_bytes_estimate", 0)
@@ -259,8 +234,6 @@ class Downloader:
                 else:
                     speed_str = f"{int(speed_raw)} B/s"
                 on_progress({"percent": percent, "downloaded": downloaded, "total": total, "speed": speed_str})
-            # Intentionally skip "finished" — intermediate streams (.m4a/.webm)
-            # are deleted after merging; the real path is resolved post-download.
 
         return _hook
 
@@ -270,8 +243,6 @@ class Downloader:
 
     def _download_youtube_ytdlp(self, url, type_idx, quality, on_progress, on_status):
         on_status("analyzing")
-        # quality is a string like "1080p", "720p", etc.
-        # Map to pixel height; default to 1080 if unknown
         height_map = {"2160p": 2160, "1440p": 1440, "1080p": 1080, "720p": 720, "360p": 360}
         res = height_map.get(str(quality), 1080)
 
@@ -326,7 +297,6 @@ class Downloader:
             "outtmpl": os.path.join(self.downloads_dir, _OUTTMPL),
             "progress_hooks": [hook],
             "ffmpeg_location": resource_path("ffmpeg.exe"),
-            # Always best quality for TikTok/Instagram — no user choice
             "format": "bestvideo+bestaudio/best",
             "merge_output_format": "mp4",
         }
@@ -357,7 +327,6 @@ class Downloader:
             gdl_config.set(("extractor",), "base-directory", task_dir)
             gdl_config.set(("extractor",), "directory", [])
 
-            # Patch gallery-dl's status line to extract real-time progress
             _downloaded = [0]
             _original_status = getattr(gdl_output, "stderr", None)
 
@@ -365,7 +334,6 @@ class Downloader:
                 def handle_url(self, url, kwdict):
                     result = super().handle_url(url, kwdict)
                     _downloaded[0] += 1
-                    # We don't know total upfront, report indeterminate progress
                     on_progress({"percent": 0, "downloaded": _downloaded[0], "total": 0, "speed": ""})
                     return result
 
@@ -391,10 +359,8 @@ class Downloader:
             except FileNotFoundError:
                 raise RuntimeError("gallery-dl not found. Please install it or place gallery-dl.exe next to the app.")
 
-            # Count downloaded files for progress
             total = sum(len(files) for _, _, files in os.walk(task_dir))
 
         on_progress({"percent": 100, "downloaded": total, "total": total, "speed": ""})
         on_status("done")
-        # Return the folder so the UI can open it in Explorer
         return task_dir
