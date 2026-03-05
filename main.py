@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 _LOCK_FILE = os.path.join(os.environ.get("TEMP", os.path.expanduser("~")), "universal_video_downloader.lock")
 
 # ---------------------------------------------------------------------------
-#                         Tray icon (pystray + Pillow)
+#                                 Tray icon
 # ---------------------------------------------------------------------------
 
 
@@ -130,4 +130,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
