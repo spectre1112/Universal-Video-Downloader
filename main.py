@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 _LOCK_FILE = os.path.join(os.environ.get("TEMP", os.path.expanduser("~")), "universal_video_downloader.lock")
 
 # ---------------------------------------------------------------------------
-# Tray icon (pystray + Pillow)
+#                         Tray icon (pystray + Pillow)
 # ---------------------------------------------------------------------------
 
 
@@ -52,12 +52,11 @@ def _build_tray(window):
 
 
 # ---------------------------------------------------------------------------
-# Global hotkey
+#                                Global hotkey
 # ---------------------------------------------------------------------------
 
 
 def _register_hotkey(api: Api):
-    """Ctrl+Shift+S: copy URL from browser address bar and add to queue."""
     _HOTKEY_DEBOUNCE_DELAY = 0.3
 
     def _handler():
@@ -65,7 +64,6 @@ def _register_hotkey(api: Api):
             import time
             import pyautogui
             time.sleep(_HOTKEY_DEBOUNCE_DELAY)
-            # Focus address bar (Ctrl+L) then copy (Ctrl+C) — mirrors original behavior
             pyautogui.hotkey('ctrl', 'l')
             time.sleep(0.3)
             pyautogui.hotkey('ctrl', 'c')
@@ -84,7 +82,7 @@ def _register_hotkey(api: Api):
 
 
 # ---------------------------------------------------------------------------
-# Main
+#                                     Main
 # ---------------------------------------------------------------------------
 
 
@@ -92,7 +90,6 @@ def main():
     setup_logging()
     set_app_user_model_id()
 
-    # Single-instance guard via filelock
     lock = FileLock(_LOCK_FILE, timeout=0)
     try:
         lock.acquire()
@@ -133,3 +130,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
