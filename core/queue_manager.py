@@ -23,6 +23,7 @@ class QueueManager:
         return os.path.join(os.path.expanduser("~"), ".universal_video_downloader", "queue.json")
 
     def _save(self) -> None:
+        """Persist completed/errored items to disk."""
         try:
             save_dir = os.path.dirname(self._save_path)
             os.makedirs(save_dir, exist_ok=True)
@@ -33,6 +34,7 @@ class QueueManager:
             logger.error("Failed to save queue: %s", e)
 
     def _load(self) -> None:
+        """Load persisted items on startup."""
         try:
             if os.path.exists(self._save_path):
                 with open(self._save_path, "r", encoding="utf-8") as f:
@@ -42,10 +44,10 @@ class QueueManager:
             logger.error("Failed to load queue: %s", e)
 
     # ------------------------------------------------------------------
-    #                             Public API
+    # Public API
     # ------------------------------------------------------------------
 
-    def add(self, url: str, type_idx: int, quality_idx: int, title: str = "", thumbnail: str = "") -> dict:
+    def add(self, url: str, type_idx: int, quality: str, title: str = "", thumbnail: str = "") -> dict:
         item = {
             "id": str(uuid.uuid4()),
             "url": url,
@@ -55,7 +57,7 @@ class QueueManager:
             "progress": 0,
             "speed": "",
             "type_idx": type_idx,
-            "quality_idx": quality_idx,
+            "quality": quality,
             "file_path": None,
             "is_album": False,
         }
@@ -66,6 +68,7 @@ class QueueManager:
         return item
 
     def update_info(self, item_id: str, title: str, thumbnail: str) -> None:
+        """Update title and thumbnail after async info fetch."""
         with self._lock:
             for item in self._items:
                 if item["id"] == item_id:
@@ -84,8 +87,27 @@ class QueueManager:
             self._items = [i for i in self._items if i["status"] not in ("done", "error")]
             self._save()
 
+    def delete_item(self, item_id: str) -> None:
+        """Remove item from queue and delete its file(s) from disk."""
+        import shutil
+        with self._lock:
+            item = next((i for i in self._items if i["id"] == item_id), None)
+            if item is None:
+                return
+            path = item.get("file_path")
+            if path:
+                try:
+                    if os.path.isdir(path):
+                        shutil.rmtree(path, ignore_errors=True)
+                    elif os.path.isfile(path):
+                        os.remove(path)
+                except Exception as e:
+                    logger.error("delete_item: failed to delete file %s: %s", path, e)
+            self._items = [i for i in self._items if i["id"] != item_id]
+            self._save()
+
     # ------------------------------------------------------------------
-    #                         Internal helpers
+    # Internal helpers
     # ------------------------------------------------------------------
 
     def _maybe_start_next(self) -> None:
@@ -113,6 +135,7 @@ class QueueManager:
                     item["status"] = "error"
                     logger.error("Item %s error: %s", item["id"], status)
                 else:
+                    # analyzing, downloading, merging, converting
                     item["status"] = status
 
         def on_finish(path: Optional[str]):
@@ -121,6 +144,7 @@ class QueueManager:
                     item["file_path"] = path
                     item["status"] = "done"
                     item["progress"] = 100
+                    # Mark as album if the returned path is a directory
                     if os.path.isdir(path):
                         item["is_album"] = True
                 elif item["status"] != "done":
@@ -132,10 +156,9 @@ class QueueManager:
         self._downloader.download(
             item["url"],
             item["type_idx"],
-            item["quality_idx"],
+            item["quality"],
             on_progress,
             on_status,
             on_finish,
         )
         logger.info("Started download: %s", item["url"])
-
