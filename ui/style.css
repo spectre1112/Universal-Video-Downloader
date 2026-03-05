@@ -310,6 +310,15 @@ body {
   border-radius: 2px;
   transition: width 0.4s ease;
 }
+.progress-indeterminate {
+  animation: indeterminate 1.4s ease infinite;
+  width: 30% !important;
+}
+@keyframes indeterminate {
+  0%   { margin-left: 0;    width: 30%; }
+  50%  { margin-left: 50%;  width: 30%; }
+  100% { margin-left: 70%;  width: 30%; }
+}
 .progress-info { font-size: 10px; color: var(--text-muted); margin-top: 3px; display: flex; justify-content: space-between; }
 
 /* ============================================================
@@ -357,6 +366,26 @@ body {
 .completed-title { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 6px; }
 
 .btn-explorer { font-size: 11px; }
+
+.completed-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.btn-danger {
+  background: transparent;
+  color: var(--danger);
+  border: 1px solid var(--danger);
+  opacity: 0.7;
+  transition: all var(--transition);
+}
+.btn-danger:hover {
+  background: var(--danger);
+  color: #fff;
+  opacity: 1;
+}
 
 /* ============================================================
    Modal (video preview)
