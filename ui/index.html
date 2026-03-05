@@ -49,12 +49,13 @@
         <button class="seg-btn" data-idx="1">🎵 MP3 (Audio Only)</button>
         <button class="seg-btn" data-idx="2">🔇 MP4 (No Audio)</button>
       </div>
+    </div>
 
-      <label class="option-label" style="margin-top:16px;">Quality</label>
+    <!-- Quality selector (shown only for YouTube, hidden for TikTok/Instagram) -->
+    <div class="card options-card hidden" id="quality-card">
+      <label class="option-label" id="quality-label">Quality</label>
       <div class="segmented-group" id="quality-group">
-        <button class="seg-btn active" data-idx="0">🔥 4K</button>
-        <button class="seg-btn" data-idx="1">🎞️ 1080p</button>
-        <button class="seg-btn" data-idx="2">📺 720p</button>
+        <!-- populated dynamically by updateQualitySelector() -->
       </div>
     </div>
 
