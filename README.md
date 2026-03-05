@@ -19,10 +19,10 @@ A modern Windows application with a dark-themed web-based interface.
 ### Project structure
 ```
 Universal-Video-Downloader/
-├── main.py                    # Entry point: pywebview window + single-instance guard
+├── main.py                    # Entry point
 ├── core/
-│   ├── api.py                 # JS↔Python bridge (pywebview API class)
-│   ├── downloader.py          # yt-dlp + pytubefix download logic
+│   ├── api.py                 # JS↔Python bridge
+│   ├── downloader.py          # yt-dlp download logic
 │   ├── queue_manager.py       # Sequential download queue
 │   └── utils.py               # resource_path, open_explorer, logging
 ├── ui/
@@ -30,6 +30,7 @@ Universal-Video-Downloader/
 │   ├── style.css              # Dark theme with animations
 │   └── app.js                 # Queue polling, tab logic, JS API calls
 ├── requirements.txt
+├── setup_node.py              # Node.js installer
 ```
 
 ## 🛠 Setup & Build
