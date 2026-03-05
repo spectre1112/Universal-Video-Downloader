@@ -12,23 +12,24 @@ logger = logging.getLogger(__name__)
 
 
 class Api:
+    """Bridge between pywebview JavaScript and Python backend."""
 
     def __init__(self, queue_manager: QueueManager):
         self._queue = queue_manager
-        self._downloader = queue_manager._downloader
+        self._downloader = queue_manager._downloader  # reuse the same instance
         self._window = None
 
     def set_window(self, window) -> None:
         self._window = window
 
     # ------------------------------------------------------------------
-    #                                Queue
+    # Queue
     # ------------------------------------------------------------------
 
-    def add_to_queue(self, url: str, type_idx: int = 0, quality_idx: int = 1) -> dict:
+    def add_to_queue(self, url: str, type_idx: int = 0, quality: str = "1080p") -> dict:
         """Add URL to queue immediately, fetch info in background."""
         try:
-            item = self._queue.add(url, int(type_idx), int(quality_idx), title="", thumbnail="")
+            item = self._queue.add(url, int(type_idx), str(quality), title="", thumbnail="")
             def _fetch_info():
                 try:
                     info = self._downloader.get_info(url)
@@ -49,7 +50,7 @@ class Api:
         return {"ok": True}
 
     # ------------------------------------------------------------------
-    #                            Video info
+    # Video info
     # ------------------------------------------------------------------
 
     def get_video_info(self, url: str) -> dict:
@@ -60,7 +61,7 @@ class Api:
             return {"error": str(e)}
 
     # ------------------------------------------------------------------
-    #                        File / window helpers
+    # File / window helpers
     # ------------------------------------------------------------------
 
     def open_file(self, path: str) -> dict:
@@ -78,6 +79,24 @@ class Api:
             return {"ok": True}
         except Exception as e:
             logger.error("minimize_to_tray error: %s", e)
+            return {"ok": False, "error": str(e)}
+
+    def close_window(self) -> dict:
+        try:
+            if self._window:
+                self._window.destroy()
+            return {"ok": True}
+        except Exception as e:
+            logger.error("close_window error: %s", e)
+            return {"ok": False, "error": str(e)}
+
+    def delete_item(self, item_id: str) -> dict:
+        """Delete a completed item: remove the file from disk and from the queue."""
+        try:
+            self._queue.delete_item(item_id)
+            return {"ok": True}
+        except Exception as e:
+            logger.error("delete_item error: %s", e)
             return {"ok": False, "error": str(e)}
 
     def move_window(self, dx: int, dy: int) -> None:
@@ -125,5 +144,4 @@ class Api:
                     audio = data_url
         except Exception as e:
             logger.error("get_album_files error: %s", e)
-
         return {"images": images, "audio": audio}
