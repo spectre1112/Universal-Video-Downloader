@@ -16,7 +16,6 @@ _RES_HEIGHTS  = [2160, 1080, 720]
 _WINDOWS_FORBIDDEN_CHARS = r'\/:*?"<>|'
 _YOUTUBE_HOSTS = {"youtube.com", "www.youtube.com", "youtu.be", "m.youtube.com"}
 
-# Try to import pytubefix; used only as an optional fallback for info fetching
 try:
     from pytubefix import YouTube
     from pytubefix import request as pytubefix_request
@@ -42,7 +41,6 @@ def _is_youtube(url: str) -> bool:
 
 
 def _is_tiktok_photo(url: str) -> bool:
-    """TikTok photo-album URLs contain /photo/ in the path."""
     try:
         parsed = urlparse(url)
         return "tiktok.com" in (parsed.hostname or "") and "/photo/" in parsed.path
@@ -51,7 +49,6 @@ def _is_tiktok_photo(url: str) -> bool:
 
 
 def _find_node_path() -> Optional[str]:
-    """Find the Node.js binary. Prefers bundled portable node, falls back to system PATH."""
     bundled = resource_path(os.path.join("node", "node.exe"))
     if os.path.isfile(bundled):
         return bundled
@@ -63,26 +60,9 @@ def _find_node_path() -> Optional[str]:
 
 
 def _build_ydl_base_opts() -> dict:
-    """Build common yt-dlp options including JS runtime and remote EJS components.
-
-    Since yt-dlp >= 2025.11.12, YouTube requires an external JavaScript
-    challenge solver (EJS) to decrypt the n-parameter.
-
-    Notes:
-    - ImpersonateTarget is intentionally NOT set: using curl_cffi Chrome
-      impersonation causes ConnectionResetError (10054) on YouTube.
-      yt-dlp's default HTTP client works fine.
-    - ``remote_components`` must be a list, not a string — passing a plain
-      string causes yt-dlp to iterate over its characters and emit
-      "Ignoring unsupported remote component(s): g, h, j, s ..." warnings.
-
-    See https://github.com/yt-dlp/yt-dlp/wiki/EJS for details.
-    """
     opts: dict = {
         "quiet": True,
         "noplaylist": True,
-        # ---- critical for YouTube since 2025.11.12 ----
-        # Must be a list, not a bare string
         "remote_components": ["ejs:github"],
     }
     node_path = _find_node_path()
@@ -97,7 +77,6 @@ def _safe_title(title: str) -> str:
     return "".join(c for c in title if c not in _WINDOWS_FORBIDDEN_CHARS).strip() or "video"
 
 
-# yt-dlp output template — uses %(field)s Python-style formatting
 _OUTTMPL = "%(title)s.%(ext)s"
 
 
@@ -106,7 +85,7 @@ class Downloader:
         self.downloads_dir = os.path.join(os.path.expanduser("~"), "Downloads")
 
     # ------------------------------------------------------------------
-    # Public API
+    #                             Public API
     # ------------------------------------------------------------------
 
     def get_info(self, url: str) -> dict:
@@ -144,7 +123,7 @@ class Downloader:
         return t
 
     # ------------------------------------------------------------------
-    # Info helpers
+    #                            Info helpers
     # ------------------------------------------------------------------
 
     def _info_ytdlp(self, url: str) -> dict:
@@ -161,7 +140,6 @@ class Downloader:
         h, m = divmod(m, 60)
         duration_str = f"{h}:{m:02d}:{s:02d}" if h else f"{m}:{s:02d}"
 
-        # Best thumbnail: prefer the highest-res one
         thumbnail = info.get("thumbnail") or ""
         thumbs = info.get("thumbnails") or []
         if thumbs:
@@ -173,7 +151,6 @@ class Downloader:
             if best:
                 thumbnail = best.get("url", thumbnail)
 
-        # For YouTube, expose available resolutions
         qualities = ["best"]
         if _is_youtube(url):
             found = []
@@ -192,7 +169,7 @@ class Downloader:
         }
 
     # ------------------------------------------------------------------
-    # Download orchestration
+    #                     Download orchestration
     # ------------------------------------------------------------------
 
     def _run(self, url, type_idx, quality_idx, on_progress, on_status, on_finish):
@@ -210,7 +187,7 @@ class Downloader:
             on_finish(None)
 
     # ------------------------------------------------------------------
-    # Progress hook helper (shared by YouTube and generic downloaders)
+    #                         Progress hook helper
     # ------------------------------------------------------------------
 
     @staticmethod
@@ -236,7 +213,7 @@ class Downloader:
         return _hook
 
     # ------------------------------------------------------------------
-    # YouTube via yt-dlp
+    #                         YouTube via yt-dlp
     # ------------------------------------------------------------------
 
     def _download_youtube_ytdlp(self, url, type_idx, quality_idx, on_progress, on_status):
@@ -248,15 +225,12 @@ class Downloader:
         hook = self._make_progress_hook(final_path_holder, on_progress)
 
         if type_idx == 1:
-            # Audio only -> MP3
             fmt = "bestaudio/best"
             postprocessors = [{"key": "FFmpegExtractAudio", "preferredcodec": "mp3", "preferredquality": "192"}]
         elif type_idx == 2:
-            # Video only, no audio
             fmt = f"bestvideo[height<={res}]/bestvideo"
             postprocessors = []
         else:
-            # Video + Audio merged
             fmt = f"bestvideo[height<={res}]+bestaudio/best"
             postprocessors = []
 
@@ -277,7 +251,6 @@ class Downloader:
             info = ydl.extract_info(url, download=True)
             if final_path_holder[0] is None:
                 final_path_holder[0] = ydl.prepare_filename(info)
-                # For MP3, yt-dlp changes the extension
                 if type_idx == 1:
                     base, _ = os.path.splitext(final_path_holder[0])
                     mp3_path = base + ".mp3"
@@ -288,7 +261,7 @@ class Downloader:
         return final_path_holder[0]
 
     # ------------------------------------------------------------------
-    # Generic (Instagram, TikTok video, etc.) via yt-dlp
+    #         Generic (Instagram, TikTok video, etc.) via yt-dlp
     # ------------------------------------------------------------------
 
     def _download_generic(self, url, quality_idx, on_progress, on_status):
@@ -317,7 +290,7 @@ class Downloader:
         return final_path_holder[0]
 
     # ------------------------------------------------------------------
-    # TikTok photo albums via gallery-dl
+    #                 TikTok photo albums via gallery-dl
     # ------------------------------------------------------------------
 
     def _download_tiktok_photos(self, url, on_progress, on_status):
@@ -351,7 +324,6 @@ class Downloader:
             except FileNotFoundError:
                 raise RuntimeError("gallery-dl not found. Please install it or place gallery-dl.exe next to the app.")
 
-        # Count downloaded files for progress
         files = []
         for root, _, filenames in os.walk(task_dir):
             for f in sorted(filenames):
@@ -359,5 +331,4 @@ class Downloader:
 
         on_progress({"percent": 100, "downloaded": len(files), "total": len(files), "speed": ""})
         on_status("done")
-        # Return the folder so the UI can open it in Explorer
         return task_dir
