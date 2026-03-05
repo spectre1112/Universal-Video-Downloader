@@ -7,17 +7,17 @@
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
-const INFO_DEBOUNCE_MS     = 800;  // delay before fetching video info after URL input
-const QUEUE_POLL_INTERVAL_MS = 1000; // queue polling frequency
+const INFO_DEBOUNCE_MS     = 800; 
+const QUEUE_POLL_INTERVAL_MS = 1000; 
 
 // ---------------------------------------------------------------------------
 // State
 // ---------------------------------------------------------------------------
 let selectedType    = 0;
-let selectedQuality = 1;
+let selectedQuality = '1080p';
 let queuePollTimer  = null;
 let infoDebounceTimer = null;
-let lastRenderedQueue = ''; // simple cache to avoid unnecessary redraws
+let lastRenderedQueue = ''; 
 
 // ---------------------------------------------------------------------------
 // Wait for pywebview JS API
@@ -51,7 +51,6 @@ function initTabs() {
 function initTitleBar() {
   const titlebar = document.getElementById('titlebar');
 
-  // Custom drag via pywebview move_window (if supported) or mousedown delta
   let dragging = false;
   let startX = 0, startY = 0;
 
@@ -85,13 +84,13 @@ function initTitleBar() {
 
   document.getElementById('btn-close').addEventListener('click', () => {
     if (window.pywebview && window.pywebview.api) {
-      window.pywebview.api.minimize_to_tray();
+      window.pywebview.api.close_window();
     }
   });
 }
 
 // ---------------------------------------------------------------------------
-// Segmented controls (type / quality)
+// Segmented controls (type only — quality is dynamic, handled in updateQualitySelector)
 // ---------------------------------------------------------------------------
 function initSegmented() {
   document.querySelectorAll('#type-group .seg-btn').forEach(btn => {
@@ -101,12 +100,30 @@ function initSegmented() {
       selectedType = parseInt(btn.dataset.idx, 10);
     });
   });
+}
 
-  document.querySelectorAll('#quality-group .seg-btn').forEach(btn => {
+function updateQualitySelector(qualities, platform) {
+  const qualityCard = document.getElementById('quality-card');
+  const group = document.getElementById('quality-group');
+
+  if (!qualities || qualities.length === 0) {
+    qualityCard.classList.add('hidden');
+    selectedQuality = 'best';
+    return;
+  }
+
+  qualityCard.classList.remove('hidden');
+  group.innerHTML = qualities.map((q, i) =>
+    `<button class="seg-btn${i === 0 ? ' active' : ''}" data-quality="${q}">${q}</button>`
+  ).join('');
+
+  selectedQuality = qualities[0];
+
+  group.querySelectorAll('.seg-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('#quality-group .seg-btn').forEach(b => b.classList.remove('active'));
+      group.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      selectedQuality = parseInt(btn.dataset.idx, 10);
+      selectedQuality = btn.dataset.quality;
     });
   });
 }
@@ -126,7 +143,6 @@ function initUrlInput() {
         triggerInfoFetch(text.trim());
       }
     } catch (_) {
-      // Clipboard API may be unavailable; user can paste manually
     }
   });
 
@@ -135,6 +151,7 @@ function initUrlInput() {
     clearTimeout(infoDebounceTimer);
     if (!url.startsWith('http')) {
       preview.classList.add('hidden');
+      document.getElementById('quality-card').classList.add('hidden');
       return;
     }
     infoDebounceTimer = setTimeout(() => triggerInfoFetch(url), INFO_DEBOUNCE_MS);
@@ -158,6 +175,7 @@ function triggerInfoFetch(url) {
       document.getElementById('preview-title').textContent = info.title;
       document.getElementById('preview-duration').textContent = info.duration || '';
       document.getElementById('preview-card').classList.remove('hidden');
+      updateQualitySelector(info.qualities, info.platform);
     } else {
       document.getElementById('preview-card').classList.add('hidden');
     }
@@ -184,7 +202,6 @@ function initAddToQueue() {
         setDlStatus('✓ Added to queue!', 'var(--success)');
         document.getElementById('url-input').value = '';
         document.getElementById('preview-card').classList.add('hidden');
-        // Switch to queue tab
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(s => s.classList.remove('active'));
         document.querySelector('.tab-btn[data-tab="queue"]').classList.add('active');
@@ -210,7 +227,7 @@ function setDlStatus(msg, color) {
 function startQueuePolling() {
   if (queuePollTimer) clearInterval(queuePollTimer);
   queuePollTimer = setInterval(pollQueue, QUEUE_POLL_INTERVAL_MS);
-  pollQueue(); // immediate first run
+  pollQueue();
 }
 
 async function pollQueue() {
@@ -222,7 +239,6 @@ async function pollQueue() {
 }
 
 function renderQueue(items) {
-  // Avoid DOM thrashing when nothing changed
   const key = JSON.stringify(items);
   if (key === lastRenderedQueue) return;
   lastRenderedQueue = key;
@@ -233,19 +249,16 @@ function renderQueue(items) {
   const active = items.filter(i => i.status !== 'done' && i.status !== 'error');
   const done   = items.filter(i => i.status === 'done');
 
-  // Queue list
   if (active.length === 0) {
     list.innerHTML = '<div class="empty-state">No active or pending downloads.</div>';
   } else {
     list.innerHTML = active.map(item => renderQueueCard(item)).join('');
   }
 
-  // Completed grid
   if (done.length === 0) {
     completedGrid.innerHTML = '<div class="empty-state">No completed downloads yet.</div>';
   } else {
     completedGrid.innerHTML = done.map(item => renderCompletedCard(item)).join('');
-    // Attach open-file handlers
     completedGrid.querySelectorAll('[data-open-path]').forEach(btn => {
       btn.addEventListener('click', e => {
         e.stopPropagation();
@@ -255,9 +268,18 @@ function renderQueue(items) {
         }
       });
     });
-    // Attach play-video handlers (completed card click)
+    completedGrid.querySelectorAll('.btn-delete').forEach(btn => {
+      btn.addEventListener('click', async e => {
+        e.stopPropagation();
+        const id = btn.dataset.itemId;
+        if (!id || !window.pywebview || !window.pywebview.api) return;
+        await window.pywebview.api.delete_item(id);
+        pollQueue();
+      });
+    });
     completedGrid.querySelectorAll('.completed-card').forEach(card => {
-      card.addEventListener('click', () => {
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('[data-open-path]')) return;
         const path = card.dataset.filePath;
         if (!path) return;
         if (card.dataset.isAlbum === '1') {
@@ -292,8 +314,11 @@ function renderQueueCard(item) {
   const speed  = item.speed ? `<span>${escHtml(item.speed)}</span>` : '';
   const statusCls = 'status-' + item.status;
   const progressBlock = item.status === 'downloading' || item.status === 'merging' || item.status === 'converting'
-    ? `<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
-       <div class="progress-info"><span>${pct}%</span>${speed}</div>`
+    ? item.progress > 0
+      ? `<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+         <div class="progress-info"><span>${pct}%</span>${speed}</div>`
+      : `<div class="progress-bar"><div class="progress-fill progress-indeterminate" style="width:30%"></div></div>
+         <div class="progress-info"><span>Downloading…</span>${speed}</div>`
     : '';
   return `<div class="queue-card">
     ${thumb}
@@ -314,14 +339,17 @@ function renderCompletedCard(item) {
     ? `<button class="btn btn-secondary btn-sm btn-explorer" data-open-path="${escHtml(item.file_path)}" onclick="event.stopPropagation()">Open in Explorer</button>`
     : '';
   const playIcon = item.is_album ? '🖼️' : '▶';
-  return `<div class="completed-card" data-file-path="${escHtml(item.file_path || '')}" data-is-album="${item.is_album ? '1' : ''}">
+  return `<div class="completed-card" data-file-path="${escHtml(item.file_path || '')}" data-is-album="${item.is_album ? '1' : ''}" data-item-id="${escHtml(item.id)}">
     <div class="completed-thumb-wrap">
       ${thumb}
       <div class="completed-play-icon">${playIcon}</div>
     </div>
     <div class="completed-info">
       <div class="completed-title">${title}</div>
-      ${openBtn}
+      <div class="completed-actions">
+        ${openBtn}
+        <button class="btn btn-danger btn-sm btn-delete" data-item-id="${escHtml(item.id)}" onclick="event.stopPropagation()" title="Delete file">🗑</button>
+      </div>
     </div>
   </div>`;
 }
@@ -344,8 +372,6 @@ function openVideoModal(filePath) {
   const modal = document.getElementById('video-modal');
   const video = document.getElementById('modal-video');
   if (!window.pywebview || !window.pywebview.api) return;
-  // Use Python backend to read the file and return a base64 data URL
-  // because Edge WebView2 blocks file:// access from file:// pages
   window.pywebview.api.get_video_data_url(filePath).then(dataUrl => {
     if (dataUrl) {
       video.src = dataUrl;
@@ -439,7 +465,6 @@ function setThumbPlaceholder(imgEl, icon) {
   imgEl.replaceWith(div);
 }
 
-// Global handler for inline onerror on thumbnail images
 function handleThumbError(imgEl) {
   setThumbPlaceholder(imgEl, '🎬');
 }
