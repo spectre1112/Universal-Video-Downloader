@@ -1,10 +1,10 @@
 # Universal Video Downloader
 
 ![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
-![Platform](https://img.shields.io/badge/platform-windows%20%7C%20telegram-lightgrey.svg)
+![Platform](https://img.shields.io/badge/platform-Windows-0078d7.svg)
 ![License](https://img.shields.io/badge/license-Unlicense-blue.svg)
 
-A powerful media downloader package written in Python. This project includes a modern Windows GUI built with **pywebview + HTML/CSS/JS** and a Telegram bot designed to handle large amounts of data via the local Telegram API.
+A powerful media downloader package written in Python. This project includes a modern Windows GUI built with **pywebview + HTML/CSS/JS** 
 
 ## 📦 Components
 
@@ -30,13 +30,7 @@ Universal-Video-Downloader/
 │   ├── style.css              # Dark theme with animations
 │   └── app.js                 # Queue polling, tab logic, JS API calls
 ├── requirements.txt
-└── telegram_bot.py            # (unchanged) Telegram bot component
 ```
-
-### 🤖 Telegram Bot (telegram_bot.py)
-A backend bot built for the local Telegram API server.
-* **YouTube Support:** Includes interactive resolution selection for end-users.
-* **Extended Limits:** Supports file uploads up to 2GB (requires Local API).
 
 ## 🛠 Setup & Build
 
@@ -90,4 +84,3 @@ python -m PyInstaller --onefile --windowed --icon=icon.ico ^
 * **filelock:** Single-instance guard (replaces the old UDP socket approach).
 * **pystray + Pillow:** System tray icon.
 * **keyboard:** Global hotkey registration.
-* **Local API:** The Telegram bot requires a local server instance to bypass the 50 MB upload limit.
