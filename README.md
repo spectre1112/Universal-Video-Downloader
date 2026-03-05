@@ -1,8 +1,8 @@
 # Universal Video Downloader
 
 ![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
-![Platform](https://img.shields.io/badge/platform-Windows-0078d7.svg)
-![License](https://img.shields.io/badge/license-Unlicense-blue.svg)
+![Platform](https://img.shields.io/badge/Windows-aaaaaa?style=flat&logo=windows&logoColor=lightgrey)
+![License](https://img.shields.io/badge/license-Unlicense-green.svg)
 
 A powerful media downloader package written in Python. This project includes a modern Windows GUI built with **pywebview + HTML/CSS/JS** 
 
