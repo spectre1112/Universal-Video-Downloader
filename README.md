@@ -40,11 +40,6 @@ Install all dependencies:
 pip install -r requirements.txt
 ```
 
-For the Telegram Bot only:
-```
-pip install aiogram pytubefix yt-dlp gallery-dl
-```
-
 ### 2. FFmpeg Setup
 FFmpeg is required to merge audio and video streams.
 * **Direct Download:** https://github.com/GyanD/codexffmpeg/releases/
