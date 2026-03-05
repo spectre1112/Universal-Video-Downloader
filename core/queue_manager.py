@@ -23,7 +23,6 @@ class QueueManager:
         return os.path.join(os.path.expanduser("~"), ".universal_video_downloader", "queue.json")
 
     def _save(self) -> None:
-        """Persist completed/errored items to disk."""
         try:
             save_dir = os.path.dirname(self._save_path)
             os.makedirs(save_dir, exist_ok=True)
@@ -34,7 +33,6 @@ class QueueManager:
             logger.error("Failed to save queue: %s", e)
 
     def _load(self) -> None:
-        """Load persisted items on startup."""
         try:
             if os.path.exists(self._save_path):
                 with open(self._save_path, "r", encoding="utf-8") as f:
@@ -68,7 +66,6 @@ class QueueManager:
         return item
 
     def update_info(self, item_id: str, title: str, thumbnail: str) -> None:
-        """Update title and thumbnail after async info fetch."""
         with self._lock:
             for item in self._items:
                 if item["id"] == item_id:
@@ -88,7 +85,6 @@ class QueueManager:
             self._save()
 
     def delete_item(self, item_id: str) -> None:
-        """Remove item from queue and delete its file(s) from disk."""
         import shutil
         with self._lock:
             item = next((i for i in self._items if i["id"] == item_id), None)
@@ -135,7 +131,6 @@ class QueueManager:
                     item["status"] = "error"
                     logger.error("Item %s error: %s", item["id"], status)
                 else:
-                    # analyzing, downloading, merging, converting
                     item["status"] = status
 
         def on_finish(path: Optional[str]):
@@ -144,7 +139,6 @@ class QueueManager:
                     item["file_path"] = path
                     item["status"] = "done"
                     item["progress"] = 100
-                    # Mark as album if the returned path is a directory
                     if os.path.isdir(path):
                         item["is_album"] = True
                 elif item["status"] != "done":
@@ -162,3 +156,4 @@ class QueueManager:
             on_finish,
         )
         logger.info("Started download: %s", item["url"])
+
