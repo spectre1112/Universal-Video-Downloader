@@ -20,16 +20,14 @@ def setup_logging():
 
 
 def resource_path(relative_path: str) -> str:
-    """Return absolute path to resource, works for dev and for PyInstaller."""
     try:
-        base_path = sys._MEIPASS  # type: ignore[attr-defined]
+        base_path = sys._MEIPASS
     except AttributeError:
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
 
 
 def open_explorer(path: str) -> None:
-    """Open a file or folder in Windows Explorer."""
     path = os.path.normpath(path)
     try:
         if os.path.isfile(path):
@@ -41,8 +39,8 @@ def open_explorer(path: str) -> None:
 
 
 def set_app_user_model_id(app_id: str = "video.downloader.v2.0.0") -> None:
-    """Set AppUserModelID for correct taskbar icon on Windows."""
     try:
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
     except Exception as e:
         logger.warning("Could not set AppUserModelID: %s", e)
+
