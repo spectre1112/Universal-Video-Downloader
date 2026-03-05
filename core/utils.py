@@ -32,8 +32,12 @@ def open_explorer(path: str) -> None:
     try:
         if os.path.isfile(path):
             subprocess.Popen(["explorer", "/select,", path])
-        else:
+        elif os.path.isdir(path):
             subprocess.Popen(["explorer", path])
+        else:
+            downloads = os.path.join(os.path.expanduser("~"), "Downloads")
+            logger.warning("open_explorer: path not found %s, opening Downloads instead", path)
+            subprocess.Popen(["explorer", downloads])
     except Exception as e:
         logger.error("Failed to open explorer for %s: %s", path, e)
 
@@ -43,4 +47,3 @@ def set_app_user_model_id(app_id: str = "video.downloader.v2.0.0") -> None:
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
     except Exception as e:
         logger.warning("Could not set AppUserModelID: %s", e)
-
