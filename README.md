@@ -2,7 +2,7 @@
 
 ![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-windows%20%7C%20telegram-lightgrey.svg)
-![License]https://img.shields.io/badge/license-Unlicense-blue.svg)
+![License](https://img.shields.io/badge/license-Unlicense-blue.svg)
 
 A powerful media downloader package written in Python. This project includes a modern Windows GUI built with **pywebview + HTML/CSS/JS** and a Telegram bot designed to handle large amounts of data via the local Telegram API.
 
