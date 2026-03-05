@@ -8,7 +8,7 @@ A powerful media downloader package written in Python. This project includes a m
 
 ## 📦 Components
 
-### 💻 Desktop GUI (main.py)
+### 💻 Desktop GUI
 A modern Windows application with a dark-themed web-based interface.
 * **Quality:** Supports resolution up to 2160p (4K).
 * **Queue:** Download multiple videos sequentially with a live progress UI.
