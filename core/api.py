@@ -16,7 +16,7 @@ class Api:
 
     def __init__(self, queue_manager: QueueManager):
         self._queue = queue_manager
-        self._downloader = queue_manager._downloader  # reuse the same instance
+        self._downloader = queue_manager._downloader
         self._window = None
 
     def set_window(self, window) -> None:
@@ -27,7 +27,6 @@ class Api:
     # ------------------------------------------------------------------
 
     def add_to_queue(self, url: str, type_idx: int = 0, quality: str = "1080p") -> dict:
-        """Add URL to queue immediately, fetch info in background."""
         try:
             item = self._queue.add(url, int(type_idx), str(quality), title="", thumbnail="")
             def _fetch_info():
@@ -91,7 +90,6 @@ class Api:
             return {"ok": False, "error": str(e)}
 
     def delete_item(self, item_id: str) -> dict:
-        """Delete a completed item: remove the file from disk and from the queue."""
         try:
             self._queue.delete_item(item_id)
             return {"ok": True}
@@ -100,7 +98,6 @@ class Api:
             return {"ok": False, "error": str(e)}
 
     def move_window(self, dx: int, dy: int) -> None:
-        """Called from JS titlebar drag to move the frameless window."""
         try:
             if self._window:
                 x = self._window.x + int(dx)
@@ -110,8 +107,6 @@ class Api:
             logger.error("move_window error: %s", e)
 
     def get_video_data_url(self, path: str) -> str:
-        """Read a local video file and return a base64 data URL for the player.
-        Needed because Edge WebView2 blocks file:// access from file:// pages."""
         try:
             mime, _ = mimetypes.guess_type(path)
             if not mime:
@@ -124,7 +119,6 @@ class Api:
             return ""
 
     def get_album_files(self, folder_path: str) -> dict:
-        """Scan a photo album folder and return base64 data URLs for images and audio."""
         images = []
         audio = None
         try:
@@ -145,3 +139,4 @@ class Api:
         except Exception as e:
             logger.error("get_album_files error: %s", e)
         return {"images": images, "audio": audio}
+
