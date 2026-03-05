@@ -1,13 +1,3 @@
-"""
-setup_node.py — Download portable Node.js for Windows x64.
-
-Run this script once before first use:
-    python setup_node.py
-
-It downloads node.exe from the official Node.js distribution and places it at
-node/node.exe, where core/downloader.py will automatically detect it.
-"""
-
 import os
 import zipfile
 import urllib.request
@@ -44,3 +34,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
