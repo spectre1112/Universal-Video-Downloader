@@ -1,0 +1,12 @@
+pywebview>=5.0.0
+yt-dlp>=2024.12.13
+pytubefix>=8.0.0
+filelock>=3.13.0
+keyboard>=0.13.5
+pyperclip>=1.9.0
+pystray>=0.19.5
+Pillow>=10.0.0
+curl_cffi>=0.7.0
+pywin32>=306
+pyautogui>=0.9.54
+gallery-dl>=1.27.0

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Universal Video Downloader</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Custom Title Bar -->
+  <div id="titlebar">
+    <span id="titlebar-title">Universal Video Downloader</span>
+    <div id="titlebar-controls">
+      <button id="btn-minimize" title="Minimize to tray">&#8211;</button>
+      <button id="btn-close" title="Close">&#10005;</button>
+    </div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <nav id="tabs">
+    <button class="tab-btn active" data-tab="download">Download</button>
+    <button class="tab-btn" data-tab="queue">Queue</button>
+    <button class="tab-btn" data-tab="completed">Completed</button>
+  </nav>
+
+  <!-- Tab: Download -->
+  <section id="tab-download" class="tab-content active">
+    <div class="card url-card">
+      <div class="url-row">
+        <input id="url-input" type="text" placeholder="Paste video URL here..." autocomplete="off" spellcheck="false" />
+        <button id="btn-paste" class="btn btn-secondary">Paste</button>
+      </div>
+    </div>
+
+    <!-- Video preview card (hidden until info loaded) -->
+    <div id="preview-card" class="card preview-card hidden">
+      <img id="preview-thumb" src="" alt="thumbnail" />
+      <div class="preview-meta">
+        <div id="preview-title" class="preview-title"></div>
+        <div id="preview-duration" class="preview-duration"></div>
+      </div>
+    </div>
+
+    <!-- Type selector -->
+    <div class="card options-card">
+      <label class="option-label">Type</label>
+      <div class="segmented-group" id="type-group">
+        <button class="seg-btn active" data-idx="0">🎬 MP4 (Video+Audio)</button>
+        <button class="seg-btn" data-idx="1">🎵 MP3 (Audio Only)</button>
+        <button class="seg-btn" data-idx="2">🔇 MP4 (No Audio)</button>
+      </div>
+
+      <label class="option-label" style="margin-top:16px;">Quality</label>
+      <div class="segmented-group" id="quality-group">
+        <button class="seg-btn active" data-idx="0">🔥 4K</button>
+        <button class="seg-btn" data-idx="1">🎞️ 1080p</button>
+        <button class="seg-btn" data-idx="2">📺 720p</button>
+      </div>
+    </div>
+
+    <button id="btn-add-queue" class="btn btn-primary">Add to Queue</button>
+    <div id="dl-status" class="dl-status"></div>
+  </section>
+
+  <!-- Tab: Queue -->
+  <section id="tab-queue" class="tab-content">
+    <div class="queue-header">
+      <span class="section-title">Active &amp; Pending</span>
+      <button id="btn-clear-queue" class="btn btn-secondary btn-sm">Clear done</button>
+    </div>
+    <div id="queue-list" class="queue-list">
+      <div class="empty-state">No downloads yet. Add a URL on the Download tab.</div>
+    </div>
+  </section>
+
+  <!-- Tab: Completed -->
+  <section id="tab-completed" class="tab-content">
+    <div class="queue-header">
+      <span class="section-title">Completed Downloads</span>
+    </div>
+    <div id="completed-grid" class="completed-grid">
+      <div class="empty-state">No completed downloads yet.</div>
+    </div>
+  </section>
+
+  <!-- Video preview modal -->
+  <div id="video-modal" class="modal hidden">
+    <div class="modal-overlay" id="modal-overlay"></div>
+    <div class="modal-content">
+      <button class="modal-close" id="modal-close">&#10005;</button>
+      <video id="modal-video" controls></video>
+    </div>
+  </div>
+
+  <!-- Photo album modal -->
+  <div id="album-modal" class="modal hidden">
+    <div class="modal-overlay" id="album-modal-overlay"></div>
+    <div class="modal-content album-modal-content">
+      <button class="modal-close" id="album-modal-close">&#10005;</button>
+      <div class="album-viewer">
+        <button class="album-nav album-prev" id="album-prev">&#10094;</button>
+        <img id="album-image" src="" alt="photo" />
+        <button class="album-nav album-next" id="album-next">&#10095;</button>
+      </div>
+      <div class="album-counter" id="album-counter"></div>
+      <audio id="album-audio" controls class="hidden"></audio>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
